@@ -1,0 +1,49 @@
+.my-projects {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  
+  .pi-bars {
+    font-size: 24px;
+  }
+  
+  .p-button-rounded {
+    font-size: 24px;
+  }
+  
+  .p-input-icon-left .pi {
+    left: 0.875rem;
+  }
+  
+  .p-inputtext {
+    padding-left: 2.5rem;
+  }
+  
+  .card {
+    margin-bottom: 20px;
+  }
+  
+  .card-title {
+    font-size: 1.5rem;
+  }
+  
+  .card-subtitle {
+    font-size: 1rem;
+    color: gray;
+  }
+  
+  .p-button-rounded {
+    display: flex;
+    align-items: center;
+  }
+  
+  .p-button-rounded .pi {
+    margin-right: 0.5rem;
+  }
+  .form-check-label {
+    padding-left: 10px;
+  }
+  .p-toast-message-text {
+    padding-left: 20px;
+  }
+  
