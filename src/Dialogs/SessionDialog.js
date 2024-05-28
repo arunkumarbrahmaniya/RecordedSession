@@ -249,48 +249,53 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
     };
 
     const saveRecordingToSystem = async (FILE) => {
-        debugger
-        let saveFailed = false;
         try {
-            const handle = await window.showSaveFilePicker({
-                suggestedName: `${sessionTitle}.webm`,
-                types: [
-                    {
-                        description: 'WebM Video',
-                        accept: {
-                            'video/webm': ['.webm']
+            if (window.showSaveFilePicker) {
+                // Use the File System Access API if available
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: `${sessionTitle}.webm`,
+                    types: [
+                        {
+                            description: 'WebM Video',
+                            accept: {
+                                'video/webm': ['.webm']
+                            }
                         }
-                    }
-                ]
-            });
+                    ]
+                });
     
-            const writable = await handle.createWritable();
+                const writable = await handle.createWritable();
     
-            // Write the data to the file in chunks to avoid memory issues
-            const chunkSize = 1024 * 1024; // 1 MB chunk size
-            for (let start = 0; start < FILE.size; start += chunkSize) {
-                const end = Math.min(start + chunkSize, FILE.size);
-                await writable.write(await FILE.slice(start, end).arrayBuffer());
+                // Write the data to the file in chunks to avoid memory issues
+                const chunkSize = 1024 * 1024; // 1 MB chunk size
+                for (let start = 0; start < FILE.size; start += chunkSize) {
+                    const end = Math.min(start + chunkSize, FILE.size);
+                    await writable.write(await FILE.slice(start, end).arrayBuffer());
+                }
+    
+                await writable.close();
+                console.log('File closed successfully');
+                toastBottomCenter.current.show({ severity: 'success', summary: 'File Saved', life: 3000 });
+            } else {
+                // Fallback for browsers that do not support the File System Access API
+                const blobUrl = URL.createObjectURL(FILE);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `${sessionTitle}.webm`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+                toastBottomCenter.current.show({ severity: 'success', summary: 'File Saved', life: 3000 });
             }
-    
-            await writable.close();
-            console.log('File closed successfully');
-            toastBottomCenter.current.show({ severity: 'success', summary: 'File Saved', life: 3000 });
-        } 
-        catch (err) {
-            debugger
-            saveFailed = true;
-            // Check if the error is due to user cancellation
-            if (!(err instanceof DOMException && err.name === 'AbortError')) {
-                console.error('Error saving file:', err);
-            }
+        } catch (err) {
+            console.error('Error saving file:', err);
+            toastBottomCenter.current.show({ severity: 'error', summary: 'Save Failed', life: 3000 });
         } finally {
-            if (saveFailed) {
-                toastBottomCenter.current.show({ severity: 'error', summary: 'Save Failed', life: 3000 });
-            }
             setShowSaveDialog(false);
         }
     };
+    
     const header = () => (
         <div className="p-3">
             <i className="pi pi-video"></i>
