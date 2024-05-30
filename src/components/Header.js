@@ -7,8 +7,8 @@ const Header = () => (
   <HeaderContainer>
     <NavBar>
       <NavItem to="/">Home</NavItem>
-      {/* <NavItem to="/about">About</NavItem>
-      <NavItem to="/contact">Contact</NavItem> */}
+      <NavItem to="/about">About</NavItem>
+      {/* <NavItem to="/contact">Contact</NavItem> */}
     </NavBar>
   </HeaderContainer>
 );

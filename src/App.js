@@ -11,6 +11,7 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import 'primeicons/primeicons.css';
+import CameraRecorder from './pages/Contact';
 
 const App = () => (
   <ThemeProvider theme={theme}>
@@ -20,8 +21,8 @@ const App = () => (
       <MainContent>
         <Routes>
           <Route path="/" element={<Home />} />
-          {/* <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} /> */}
+          <Route path="/about" element={<CameraRecorder/>} />
+          {/* <Route path="/contact" element={<Contact />} /> */}
         </Routes>
       </MainContent>
       <Footer />
