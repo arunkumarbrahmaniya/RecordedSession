@@ -1,4 +1,4 @@
-.camera-recorder-container {
+/* .camera-recorder-container {
     position: fixed;
     top: 0;
     left: 0;
@@ -14,7 +14,7 @@
   .camera-recorder-container.landscape {
     transform: rotate(90deg);
     width: 100vh; /* Switch width and height */
-    height: 100vw;
+    /* height: 100vw;
   }
   
   .controls {
@@ -39,4 +39,4 @@
   button:hover {
     background-color: rgba(255, 255, 255, 0.9);
   }
-  
+   */ 

@@ -5,7 +5,7 @@ import { RadioButton } from 'primereact/radiobutton';
 import { Button } from 'primereact/button';
 import { Divider } from 'primereact/divider';
 import { Toast } from 'primereact/toast';
-
+import VideoRecorder from 'react-video-recorder';
 const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const [sessionType, setSessionType] = useState('video');
     const [sessionOption, setSessionOption] = useState('recordedVideo');
@@ -24,22 +24,32 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const canvasRef = useRef(null);
     const toastBottomCenter = useRef(null);
     const videoRef = useRef(null);
+    const [audioMuted, setAudioMuted] = useState(false);
+    const [recordingNow, setRecordingNow] = useState(false);
+    const [audioStream, setAudioStream] = useState(null);
 
     useEffect(() => {
-        if (recording && sessionOption === "screenCapture") {
+        if (recordingNow && sessionOption === "screenCapture") {
             startRecording();
-        } else if (recording && sessionOption === "recordedVideo") {
+        } else if (recordingNow && sessionOption === "recordedVideo") {
             startCameraRecording();
         } else {
             stopRecording();
         }
-    }, [recording]);
+    }, [recordingNow]);
 
+    // useEffect(() => {
+    //     if(audioStream) {
+    //         toggleAudioMute();
+    //     }
+    // }, [audioStream]);
     const handleStartStop = () => {
         if (sessionTitle === '') {
             toastBottomCenter.current.show({ severity: 'warn', summary: 'Please Enter Session Title', life: 3000 });
         } else {
             setRecording(!recording);
+            // setRecordingOpen(!recordingOpen);
+            // setVisible(false);
         }
     };
 
@@ -48,7 +58,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
         try {
             screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
             audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
+            debugger
             const combinedStream = new MediaStream([
                 ...screenStream.getVideoTracks(),
                 ...audioStream.getAudioTracks()
@@ -56,7 +66,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
 
             const recorder = new MediaRecorder(combinedStream);
             setMediaRecorder(recorder);
-
+            
             recorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     setChunks((prevChunks) => [...prevChunks, event.data]);
@@ -327,6 +337,94 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const handleSessionTitle = (event) => {
         setSessionTitle(event.target.value);
     };
+    // const toggleAudioMute = () => {
+    //     setAudioMuted(!audioMuted);
+    // };
+
+    const toggleAudioMute = () => {
+        if (mediaRecorder && mediaRecorder.stream) {
+            const audioTracks = mediaRecorder.stream.getAudioTracks();
+            audioTracks.forEach(track => {
+                track.enabled = !track.enabled;
+                setAudioMuted(!audioMuted);
+            });
+        }
+    };
+    // const toggleAudioMute = () => {
+    //     debugger
+    //     if (audioStream) {
+    //         audioStream.getAudioTracks().forEach(track => {
+    //             track.enabled = !track.enabled;
+                
+    //         });
+    //     }
+    // };
+
+    const toggleCamera = async () => {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            if (videoDevices.length === 0) {
+                console.warn('No cameras available');
+                return;
+            }
+    
+            let defaultCamera = null;
+    
+            // If the user is on a mobile device, assume the default camera is the rear camera
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                for (const device of videoDevices) {
+                    if (!device.label.toLowerCase().includes('front')) {
+                        defaultCamera = device;
+                        break;
+                    }
+                }
+            } else {
+                // If the user is on a desktop, assume the default camera is the first one available
+                defaultCamera = videoDevices[0];
+            }
+    
+            // Find the current camera index
+            let currentDeviceIndex = videoDevices.findIndex(device => device.label === mediaRecorder.stream.getVideoTracks()[0].label);
+    
+            // Calculate the index of the next camera
+            let nextDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+    
+            // Get the deviceId of the next camera
+            const nextDeviceId = videoDevices[nextDeviceIndex]?.deviceId || defaultCamera?.deviceId;
+    
+            const newStream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: nextDeviceId } },
+                audio: true // Include audio if needed
+            });
+    
+            // Stop the existing tracks
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    
+            // Create a new MediaRecorder with the new stream
+            const newMediaRecorder = new MediaRecorder(newStream);
+            setMediaRecorder(newMediaRecorder);
+    
+            // Set the new stream
+            videoRef.current.srcObject = newStream;
+    
+            // Start recording with the new MediaRecorder
+            newMediaRecorder.start();
+        } catch (err) {
+            console.error('Error toggling camera:', err);
+        }
+    };
+    
+    
+
+    const handleFlash = () => {
+        // Implement the logic to toggle flash
+    };
+
+    const onExit = () => {
+        // Implement the logic to toggle flash
+    };
 
     return (
         <div>
@@ -385,13 +483,27 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                 </div>
             </Dialog>
             {sessionOption === "recordedVideo" && recording && (
-                <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9000, border: '1px solid black' }}>
-                    <video ref={videoRef} controls autoPlay style={{ width: '200px', height: '150px' }}></video>
-                </div>
+                <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black' }}>
+                    <video ref={videoRef}  autoPlay style={{ width: '500px', height: '375px' }}></video>
+                    <div className="controls" style={{position: 'absolute',left: '10px',top: '50%',transform: 'translateY(-50%)',display: 'flex',flexDirection: 'column', gap: '15px'}}>
+                        <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera}  />
+                        <Button icon="pi pi-bolt" className="control-button" onClick={handleFlash} />
+                        <Button icon="pi pi-times" className="control-button" onClick={onExit} />
+                        <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
+                    </div>
+                <Button style={{position: 'absolute',left: '50%',top: '80%',height: '50px',width: '50px',background: 'red',borderRadius: '36px',outline: 'black',padding: '10px',border: '2px solid white'}} className="start-button" onClick={() => setRecordingNow(!recordingNow)}>Start</Button>
+                </div>           
             )}
-            {videoURL && !recording && (
-                <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9000, border: '1px solid black' }}>
-                    <video key={videoChanged} src={videoURL} controls style={{ width: '200px', height: '150px' }}></video>
+            {videoURL && !recordingNow && (
+                <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black',  background: 'black' }}>
+                    <video controls key={videoChanged} src={videoURL} style={{ width: '500px', height: '375px' }}></video>
+                    <div className="controls" style={{position: 'absolute',left: '10px',top: '50%',transform: 'translateY(-50%)',display: 'flex',flexDirection: 'column', gap: '15px'}}>
+                        <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera}  />
+                        <Button icon="pi pi-bolt" className="control-button" onClick={handleFlash} />
+                        <Button icon="pi pi-times" className="control-button" onClick={onExit} />
+                        <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
+                    </div>
+                    {/* <Button style={{position: 'absolute',left: '50%',top: '80%',height: '50px',width: '50px',background: 'red',borderRadius: '36px',outline: 'black',padding: '10px',border: '2px solid white'}} className="start-button" onClick={() => console.log('Start Session')}>Start</Button> */}
                 </div>
             )}
         </div>
