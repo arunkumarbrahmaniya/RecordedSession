@@ -26,7 +26,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const videoRef = useRef(null);
     const [audioMuted, setAudioMuted] = useState(false);
     const [recordingNow, setRecordingNow] = useState(false);
-    const [audioStream, setAudioStream] = useState(null);
+    const [isVertical, setisVertical] = useState(true);
 
     useEffect(() => {
         if (recordingNow && sessionOption === "screenCapture") {
@@ -337,9 +337,6 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const handleSessionTitle = (event) => {
         setSessionTitle(event.target.value);
     };
-    // const toggleAudioMute = () => {
-    //     setAudioMuted(!audioMuted);
-    // };
 
     const toggleAudioMute = () => {
         if (mediaRecorder && mediaRecorder.stream) {
@@ -350,15 +347,6 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
             });
         }
     };
-    // const toggleAudioMute = () => {
-    //     debugger
-    //     if (audioStream) {
-    //         audioStream.getAudioTracks().forEach(track => {
-    //             track.enabled = !track.enabled;
-                
-    //         });
-    //     }
-    // };
 
     const toggleCamera = async () => {
         try {
@@ -370,57 +358,146 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                 return;
             }
     
-            let defaultCamera = null;
-    
-            // If the user is on a mobile device, assume the default camera is the rear camera
-            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                for (const device of videoDevices) {
-                    if (!device.label.toLowerCase().includes('front')) {
-                        defaultCamera = device;
-                        break;
-                    }
-                }
-            } else {
-                // If the user is on a desktop, assume the default camera is the first one available
-                defaultCamera = videoDevices[0];
-            }
-    
             // Find the current camera index
             let currentDeviceIndex = videoDevices.findIndex(device => device.label === mediaRecorder.stream.getVideoTracks()[0].label);
-    
+            
             // Calculate the index of the next camera
             let nextDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
-    
+            
             // Get the deviceId of the next camera
-            const nextDeviceId = videoDevices[nextDeviceIndex]?.deviceId || defaultCamera?.deviceId;
-    
+            const nextDeviceId = videoDevices[nextDeviceIndex].deviceId;
+            
+            // Get the new video stream from the next camera
             const newStream = await navigator.mediaDevices.getUserMedia({
                 video: { deviceId: { exact: nextDeviceId } },
-                audio: true // Include audio if needed
+                audio: false // No need to capture audio again
             });
     
-            // Stop the existing tracks
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            const newVideoTrack = newStream.getVideoTracks()[0];
     
-            // Create a new MediaRecorder with the new stream
-            const newMediaRecorder = new MediaRecorder(newStream);
-            setMediaRecorder(newMediaRecorder);
+            // Replace the video track in the existing stream
+            const oldVideoTrack = mediaRecorder.stream.getVideoTracks()[0];
+            mediaRecorder.stream.removeTrack(oldVideoTrack);
+            mediaRecorder.stream.addTrack(newVideoTrack);
+            
+            // Update the video element with the new stream
+            videoRef.current.srcObject = mediaRecorder.stream;
     
-            // Set the new stream
-            videoRef.current.srcObject = newStream;
-    
-            // Start recording with the new MediaRecorder
-            newMediaRecorder.start();
+            // Stop the old video track
+            oldVideoTrack.stop();
         } catch (err) {
             console.error('Error toggling camera:', err);
         }
     };
     
-    
 
-    const handleFlash = () => {
-        // Implement the logic to toggle flash
+    // const toggleCamera = async () => {
+    //     try {
+    //         const devices = await navigator.mediaDevices.enumerateDevices();
+    //         const videoDevices = devices.filter(device => device.kind === 'videoinput');
+    //         if (videoDevices.length === 0) {
+    //             console.warn('No cameras available');
+    //             return;
+    //         }
+    
+    //         let defaultCamera = null;
+    //         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    //             for (const device of videoDevices) {
+    //                 if (!device.label.toLowerCase().includes('front')) {
+    //                     defaultCamera = device;
+    //                     break;
+    //                 }
+    //             }
+    //         } else {
+    //             // If the user is on a desktop, assume the default camera is the first one available
+    //             defaultCamera = videoDevices[0];
+    //         }
+    
+    //         // Find the current camera index
+    //         let currentDeviceIndex = videoDevices.findIndex(device => device.label === mediaRecorder.stream.getVideoTracks()[0].label);
+    
+    //         // Calculate the index of the next camera
+    //         let nextDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+    
+    //         // Get the deviceId of the next camera
+    //         const nextDeviceId = videoDevices[nextDeviceIndex]?.deviceId || defaultCamera?.deviceId;
+    
+    //         const newStream = await navigator.mediaDevices.getUserMedia({
+    //             video: { deviceId: { exact: nextDeviceId } },
+    //             audio: true // Include audio if needed
+    //         });
+    //         // Stop the existing tracks
+    //         mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    //         // Create a new MediaRecorder with the new stream
+    //         const newMediaRecorder = new MediaRecorder(newStream);
+    //         setMediaRecorder(newMediaRecorder);
+    //         // Set the new stream
+    //         videoRef.current.srcObject = newStream;
+    
+    //         // Start recording with the new MediaRecorder
+    //         newMediaRecorder.start();
+    //     } catch (err) {
+    //         console.error('Error toggling camera:', err);
+    //     }
+    // };
+    let isFlashOn = false;
+
+    const handleFlash = async () => {
+        try {
+            const videoTrack = mediaRecorder.stream.getVideoTracks()[0];
+            const capabilities = videoTrack.getCapabilities();
+
+            if (!capabilities.torch) {
+                toastBottomCenter.current.show({ severity: 'error', summary: 'Torch (flash) is not supported on this device.', life: 3000 });
+                return;
+            }
+
+            // Toggle flash
+            isFlashOn = !isFlashOn;
+            await videoTrack.applyConstraints({ advanced: [{ torch: isFlashOn }] });
+            
+            if (isFlashOn) {
+                toastBottomCenter.current.show({ severity: 'error', summary: 'Flash turned on', life: 3000 });
+            } else {
+                toastBottomCenter.current.show({ severity: 'error', summary: 'Flash turned off', life: 3000 });
+            }
+        } catch (err) {
+            console.error('Error toggling flash:', err);
+        }
     };
+
+ // Initially set to portrait mode
+
+    const toggleCameraMode = async () => {
+        try {
+            const videoTrack = mediaRecorder.stream.getVideoTracks()[0];
+
+            // Toggle between vertical and horizontal
+            setisVertical(!isVertical);
+
+            // Change the screen orientation
+            if (isVertical) {
+                debugger
+                await window.screen.orientation.lock('portrait-primary');
+                console.log('Camera mode set to vertical (portrait)');
+            } else {
+                debugger
+                await window.screen.orientation.lock('landscape-primary');
+                console.log('Camera mode set to horizontal (landscape)');
+            }
+
+            // Define the constraints for portrait and landscape modes
+            const constraints = isVertical
+                ? { aspectRatio: 9 / 16 } // Portrait: 9:16 aspect ratio
+                : { aspectRatio: 16 / 9 }; // Landscape: 16:9 aspect ratio
+
+            await videoTrack.applyConstraints(constraints);
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
 
     const onExit = () => {
         // Implement the logic to toggle flash
@@ -488,6 +565,8 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                         <video ref={videoRef} autoPlay style={{ width: '100%', height: '100%' }}></video>
                         <div className="controls" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                             <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera} />
+                            <Button icon={`pi pi-${isVertical ? 'arrows-v' : 'arrows-h'}`} className="control-button" onClick={toggleCameraMode} />
+                            
                             <Button icon="pi pi-bolt" className="control-button" onClick={handleFlash} />
                             <Button icon="pi pi-times" className="control-button" onClick={onExit} />
                             <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
@@ -519,10 +598,10 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                     <div style={{ background: 'lightgray', position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black', width: '90%',height: '90%',boxSizing: 'border-box'}}>
                         <video controls key={videoChanged} src={videoURL} style={{ width: '100%', height: '100%' }}></video>
                         <div className="controls" style={{position: 'absolute',left: '10px',top: '50%',transform: 'translateY(-50%)',display: 'flex',flexDirection: 'column', gap: '15px'}}>
-                            <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera}  />
+                            {/* <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera}  />
                             <Button icon="pi pi-bolt" className="control-button" onClick={handleFlash} />
                             <Button icon="pi pi-times" className="control-button" onClick={onExit} />
-                            <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
+                            <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} /> */}
                         </div>
                         {/* <Button style={{position: 'absolute',left: '50%',top: '80%',height: '50px',width: '50px',background: 'red',borderRadius: '36px',outline: 'black',padding: '10px',border: '2px solid white'}} className="start-button" onClick={() => console.log('Start Session')}>Start</Button> */}
                     </div>
