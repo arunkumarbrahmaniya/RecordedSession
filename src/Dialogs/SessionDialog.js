@@ -467,7 +467,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                         ))}
                     </div>
                 </div>
-                <div className="d-flex justify-content-center flex-column align-items-center">
+                <div className="d-flex justify-content-center flex-column align-items-center" style={{ pointerEvents: recording ? 'none' : 'auto' }}>
                     <Button onClick={handleStartStop} label={recording ? "Stop Recording" : "Start Now"} className="p-button-primary" style={{ padding: '10px', borderRadius: '4px' }} />
                     {sessionOption === 'photosWithAudioRecorded' && (
                         <Button onClick={startCameraForPhoto} label={showCamera ? "Capture Photo with Audio" : "Start Camera"} className="p-button-secondary mt-2" style={{ padding: '10px', borderRadius: '4px' }} />
@@ -483,7 +483,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                 </div>
             </Dialog>
             {sessionOption === "recordedVideo" && recording && (
-                <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black' }}>
+                <div style={{ background:'lightgray',position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black' }}>
                     <video ref={videoRef}  autoPlay style={{ width: '500px', height: '375px' }}></video>
                     <div className="controls" style={{position: 'absolute',left: '10px',top: '50%',transform: 'translateY(-50%)',display: 'flex',flexDirection: 'column', gap: '15px'}}>
                         <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera}  />
@@ -495,7 +495,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                 </div>           
             )}
             {videoURL && !recordingNow && (
-                <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black',  background: 'black' }}>
+                <div style={{background:'lightgray', position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black',  background: 'black' }}>
                     <video controls key={videoChanged} src={videoURL} style={{ width: '500px', height: '375px' }}></video>
                     <div className="controls" style={{position: 'absolute',left: '10px',top: '50%',transform: 'translateY(-50%)',display: 'flex',flexDirection: 'column', gap: '15px'}}>
                         <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera}  />
