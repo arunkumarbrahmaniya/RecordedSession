@@ -5,7 +5,6 @@ import { RadioButton } from 'primereact/radiobutton';
 import { Button } from 'primereact/button';
 import { Divider } from 'primereact/divider';
 import { Toast } from 'primereact/toast';
-import VideoRecorder from 'react-video-recorder';
 const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const [sessionType, setSessionType] = useState('video');
     const [sessionOption, setSessionOption] = useState('recordedVideo');
