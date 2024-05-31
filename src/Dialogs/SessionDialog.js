@@ -5,6 +5,7 @@ import { RadioButton } from 'primereact/radiobutton';
 import { Button } from 'primereact/button';
 import { Divider } from 'primereact/divider';
 import { Toast } from 'primereact/toast';
+import { useTorchLight } from '@blackbox-vision/use-torch-light';
 const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const [sessionType, setSessionType] = useState('video');
     const [sessionOption, setSessionOption] = useState('recordedVideo');
@@ -26,6 +27,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const [audioMuted, setAudioMuted] = useState(false);
     const [recordingNow, setRecordingNow] = useState(false);
     const [isVertical, setisVertical] = useState(true);
+    const [on, toggle] = useTorchLight(streamRef.current);
 
     useEffect(() => {
         if (recordingNow && sessionOption === "screenCapture") {
@@ -566,7 +568,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                             <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera} />
                             <Button icon={`pi pi-${isVertical ? 'arrows-v' : 'arrows-h'}`} className="control-button" onClick={toggleCameraMode} />
                             
-                            <Button icon="pi pi-bolt" className="control-button" onClick={handleFlash} />
+                            <Button icon="pi pi-bolt" className="control-button" onClick={toggle} />
                             <Button icon="pi pi-times" className="control-button" onClick={onExit} />
                             <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
                         </div>
