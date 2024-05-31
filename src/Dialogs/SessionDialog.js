@@ -369,51 +369,88 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                 return;
             }
     
-            let defaultCamera = null;
-    
-            // If the user is on a mobile device, assume the default camera is the rear camera
-            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                for (const device of videoDevices) {
-                    if (!device.label.toLowerCase().includes('front')) {
-                        defaultCamera = device;
-                        break;
-                    }
-                }
-            } else {
-                // If the user is on a desktop, assume the default camera is the first one available
-                defaultCamera = videoDevices[0];
-            }
-    
             // Find the current camera index
             let currentDeviceIndex = videoDevices.findIndex(device => device.label === mediaRecorder.stream.getVideoTracks()[0].label);
-    
+            
             // Calculate the index of the next camera
             let nextDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
-    
+            
             // Get the deviceId of the next camera
-            const nextDeviceId = videoDevices[nextDeviceIndex]?.deviceId || defaultCamera?.deviceId;
-    
+            const nextDeviceId = videoDevices[nextDeviceIndex].deviceId;
+            
+            // Get the new video stream from the next camera
             const newStream = await navigator.mediaDevices.getUserMedia({
                 video: { deviceId: { exact: nextDeviceId } },
-                audio: true // Include audio if needed
+                audio: false // No need to capture audio again
             });
     
-            // Stop the existing tracks
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            const newVideoTrack = newStream.getVideoTracks()[0];
     
-            // Create a new MediaRecorder with the new stream
-            const newMediaRecorder = new MediaRecorder(newStream);
-            setMediaRecorder(newMediaRecorder);
+            // Replace the video track in the existing stream
+            const oldVideoTrack = mediaRecorder.stream.getVideoTracks()[0];
+            mediaRecorder.stream.removeTrack(oldVideoTrack);
+            mediaRecorder.stream.addTrack(newVideoTrack);
+            
+            // Update the video element with the new stream
+            videoRef.current.srcObject = mediaRecorder.stream;
     
-            // Set the new stream
-            videoRef.current.srcObject = newStream;
-    
-            // Start recording with the new MediaRecorder
-            newMediaRecorder.start();
+            // Stop the old video track
+            oldVideoTrack.stop();
         } catch (err) {
             console.error('Error toggling camera:', err);
         }
     };
+    
+
+    // const toggleCamera = async () => {
+    //     try {
+    //         const devices = await navigator.mediaDevices.enumerateDevices();
+    //         const videoDevices = devices.filter(device => device.kind === 'videoinput');
+    //         if (videoDevices.length === 0) {
+    //             console.warn('No cameras available');
+    //             return;
+    //         }
+    
+    //         let defaultCamera = null;
+    //         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    //             for (const device of videoDevices) {
+    //                 if (!device.label.toLowerCase().includes('front')) {
+    //                     defaultCamera = device;
+    //                     break;
+    //                 }
+    //             }
+    //         } else {
+    //             // If the user is on a desktop, assume the default camera is the first one available
+    //             defaultCamera = videoDevices[0];
+    //         }
+    
+    //         // Find the current camera index
+    //         let currentDeviceIndex = videoDevices.findIndex(device => device.label === mediaRecorder.stream.getVideoTracks()[0].label);
+    
+    //         // Calculate the index of the next camera
+    //         let nextDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+    
+    //         // Get the deviceId of the next camera
+    //         const nextDeviceId = videoDevices[nextDeviceIndex]?.deviceId || defaultCamera?.deviceId;
+    
+    //         const newStream = await navigator.mediaDevices.getUserMedia({
+    //             video: { deviceId: { exact: nextDeviceId } },
+    //             audio: true // Include audio if needed
+    //         });
+    //         // Stop the existing tracks
+    //         mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    //         // Create a new MediaRecorder with the new stream
+    //         const newMediaRecorder = new MediaRecorder(newStream);
+    //         setMediaRecorder(newMediaRecorder);
+    //         // Set the new stream
+    //         videoRef.current.srcObject = newStream;
+    
+    //         // Start recording with the new MediaRecorder
+    //         newMediaRecorder.start();
+    //     } catch (err) {
+    //         console.error('Error toggling camera:', err);
+    //     }
+    // };
     
     
 
