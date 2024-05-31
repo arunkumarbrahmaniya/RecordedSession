@@ -483,28 +483,50 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                 </div>
             </Dialog>
             {sessionOption === "recordedVideo" && recording && (
-                <div style={{ background:'lightgray',position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black' }}>
-                    <video ref={videoRef}  autoPlay style={{ width: '500px', height: '375px' }}></video>
-                    <div className="controls" style={{position: 'absolute',left: '10px',top: '50%',transform: 'translateY(-50%)',display: 'flex',flexDirection: 'column', gap: '15px'}}>
-                        <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera}  />
-                        <Button icon="pi pi-bolt" className="control-button" onClick={handleFlash} />
-                        <Button icon="pi pi-times" className="control-button" onClick={onExit} />
-                        <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
+                <>
+                    <div style={{ background: 'lightgray', position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black', width: '90%',height: '90%',boxSizing: 'border-box'}}>
+                        <video ref={videoRef} autoPlay style={{ width: '100%', height: '100%' }}></video>
+                        <div className="controls" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera} />
+                            <Button icon="pi pi-bolt" className="control-button" onClick={handleFlash} />
+                            <Button icon="pi pi-times" className="control-button" onClick={onExit} />
+                            <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
+                        </div>
+                        <Button style={{ position: 'absolute', left: '50%', top: '80%', height: '50px', width: '50px', background: 'red', borderRadius: '36px', outline: 'black', padding: '10px', border: '2px solid white',transform: 'translateX(-50%)'}} className="start-button" onClick={() => setRecordingNow(!recordingNow)}>
+                            Start
+                        </Button>
                     </div>
-                <Button style={{position: 'absolute',left: '50%',top: '80%',height: '50px',width: '50px',background: 'red',borderRadius: '36px',outline: 'black',padding: '10px',border: '2px solid white'}} className="start-button" onClick={() => setRecordingNow(!recordingNow)}>Start</Button>
-                </div>           
+                    <style jsx>{`
+                    @media (max-width: 600px) {
+                        div {
+                        width: 100%;
+                        height: 100%;
+                        max-width: none;
+                        max-height: none;
+                        border: none;
+                        }
+                        video {
+                        width: 100%;
+                        height: 100%;
+                        }
+                    }
+                    `}</style>
+                </>
+          
             )}
             {videoURL && !recordingNow && (
-                <div style={{background:'lightgray', position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black',  background: 'black' }}>
-                    <video controls key={videoChanged} src={videoURL} style={{ width: '500px', height: '375px' }}></video>
-                    <div className="controls" style={{position: 'absolute',left: '10px',top: '50%',transform: 'translateY(-50%)',display: 'flex',flexDirection: 'column', gap: '15px'}}>
-                        <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera}  />
-                        <Button icon="pi pi-bolt" className="control-button" onClick={handleFlash} />
-                        <Button icon="pi pi-times" className="control-button" onClick={onExit} />
-                        <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
+                <>
+                    <div style={{ background: 'lightgray', position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black', width: '90%',height: '90%',boxSizing: 'border-box'}}>
+                        <video controls key={videoChanged} src={videoURL} style={{ width: '100%', height: '100%' }}></video>
+                        <div className="controls" style={{position: 'absolute',left: '10px',top: '50%',transform: 'translateY(-50%)',display: 'flex',flexDirection: 'column', gap: '15px'}}>
+                            <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera}  />
+                            <Button icon="pi pi-bolt" className="control-button" onClick={handleFlash} />
+                            <Button icon="pi pi-times" className="control-button" onClick={onExit} />
+                            <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
+                        </div>
+                        {/* <Button style={{position: 'absolute',left: '50%',top: '80%',height: '50px',width: '50px',background: 'red',borderRadius: '36px',outline: 'black',padding: '10px',border: '2px solid white'}} className="start-button" onClick={() => console.log('Start Session')}>Start</Button> */}
                     </div>
-                    {/* <Button style={{position: 'absolute',left: '50%',top: '80%',height: '50px',width: '50px',background: 'red',borderRadius: '36px',outline: 'black',padding: '10px',border: '2px solid white'}} className="start-button" onClick={() => console.log('Start Session')}>Start</Button> */}
-                </div>
+                </>
             )}
         </div>
     );
