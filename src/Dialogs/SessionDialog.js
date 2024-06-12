@@ -28,6 +28,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const [recordingNow, setRecordingNow] = useState(false);
     const [isVertical, setisVertical] = useState(true);
     const streamRef = useRef(null);
+    const [rotation, setRotation] = useState(0);
     // const [on, toggle] = useTorchLight(streamRef.current);
     const setRef = ({ stream }) => {
         streamRef.current = stream;
@@ -478,68 +479,19 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
 
  // Initially set to portrait mode
 
- const toggleCameraMode = async () => {
-    try {
-        const currentStream = mediaRecorder.stream;
-        const videoTrack = currentStream.getVideoTracks()[0];
-        const settings = videoTrack.getSettings();
-        const currentFacingMode = settings.facingMode || 'user'; // Default to 'user' if facingMode is not available
-
-        // Check if the device is a mobile device
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        if (isMobile) {
-            // Toggle the orientation
-            if (window.screen.orientation.type.startsWith('portrait')) {
-                await window.screen.orientation.lock('landscape');
-            } else {
-                await window.screen.orientation.lock('portrait');
-            }
-
-            // Update constraints based on the new orientation
-            const isPortrait = window.screen.orientation.type.startsWith('portrait');
-            const constraints = {
-                video: {
-                    facingMode: currentFacingMode,
-                    aspectRatio: isPortrait ? 9 / 16 : 16 / 9,
-                    width: { ideal: isPortrait ? 720 : 1280 },
-                    height: { ideal: isPortrait ? 1280 : 720 }
-                },
-                audio: true
-            };
-
-            // Stop all tracks of the current stream
-            currentStream.getTracks().forEach(track => track.stop());
-
-            // Get a new stream with the updated constraints
-            const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-
-            // Replace the stream in the media recorder and the video element
-            mediaRecorder.stream = newStream;
-            videoRef.current.srcObject = newStream;
-
-            console.log(`Camera mode set to ${isPortrait ? 'vertical (portrait)' : 'horizontal (landscape)'}`);
-        } else {
-            // For desktop devices, toggle the aspect ratio
-            const isPortrait = window.screen.orientation.type.startsWith('portrait');
-            const newSettings = {
-                aspectRatio: isPortrait ? 16 / 9 : 9 / 16,
-            };
-
-            // Update the video track's settings
-            await videoTrack.applyConstraints({ advanced: [newSettings] });
-
-            console.log(`Camera mode set to ${isPortrait ? 'horizontal (landscape)' : 'vertical (portrait)'}`);
-        }
-    } catch (err) {
-        console.log('Error toggling camera mode:', err);
-    }
-};
+    const toggleCameraMode = async () => {
+        const parentDiv = document.getElementById('parentDiv');
+        parentDiv.style.transform = `translate(-50%, -50%) rotate(${rotation + 90}deg)`;
+    };
 
 
     const onExit = () => {
         setRecordingNow(false);
     };
+
+    const handleStart = () => {
+        setRecordingNow(!recordingNow);
+    }
 
     return (
         <div>
@@ -599,7 +551,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
             </Dialog>
             {sessionOption === "recordedVideo" && recording && (
                 <>
-                    <div style={{ background: 'lightgray', position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black', width: '90%',height: '90%',boxSizing: 'border-box'}}>
+                    <div id="parentDiv" style={{ background: 'lightgray', position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9000, border: '1px solid black', width: '45%',height: '50%',boxSizing: 'border-box'}}>
                         <video ref={videoRef} autoPlay style={{ width: '100%', height: '100%' }}></video>
                         <div className="controls" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                             <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera} />
@@ -609,7 +561,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                             <Button icon="pi pi-times" className="control-button" onClick={onExit} />
                             <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
                         </div>
-                        <Button style={{ position: 'absolute', left: '50%', top: '80%', height: '50px', width: '50px', background: 'red', borderRadius: '36px', outline: 'black', padding: '10px', border: '2px solid white',transform: 'translateX(-50%)'}} className="start-button" onClick={() => setRecordingNow(!recordingNow)}>
+                        <Button style={{ position: 'absolute', left: '50%', top: '80%', height: '50px', width: '50px', background: 'red', borderRadius: '36px', outline: 'black', padding: '10px', border: '2px solid white',transform: 'translateX(-50%)'}} className="start-button" onClick={() => handleStart()}>
                             Start
                         </Button>
                     </div>
