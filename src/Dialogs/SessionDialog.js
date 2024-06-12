@@ -5,7 +5,7 @@ import { RadioButton } from 'primereact/radiobutton';
 import { Button } from 'primereact/button';
 import { Divider } from 'primereact/divider';
 import { Toast } from 'primereact/toast';
-import { useTorchLight } from '@blackbox-vision/use-torch-light';
+// import { useTorchLight } from '@blackbox-vision/use-torch-light';
 const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const [sessionType, setSessionType] = useState('video');
     const [sessionOption, setSessionOption] = useState('recordedVideo');
@@ -28,7 +28,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const [recordingNow, setRecordingNow] = useState(false);
     const [isVertical, setisVertical] = useState(true);
     const streamRef = useRef(null);
-    const [on, toggle] = useTorchLight(streamRef.current);
+    // const [on, toggle] = useTorchLight(streamRef.current);
     const setRef = ({ stream }) => {
         streamRef.current = stream;
       };
