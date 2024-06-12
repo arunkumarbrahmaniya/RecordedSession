@@ -479,46 +479,38 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
  // Initially set to portrait mode
 
  const toggleCameraMode = async () => {
-    try {
-      const currentStream = mediaRecorder.stream;
-      const videoTrack = currentStream.getVideoTracks()[0];
-      const settings = videoTrack.getSettings();
-      const currentFacingMode = settings.facingMode || 'user'; // Default to 'user' if facingMode is not available
-  
-      // Toggle the orientation
+  try {
+    const currentStream = mediaRecorder.stream;
+    const videoTrack = currentStream.getVideoTracks()[0];
+    const settings = videoTrack.getSettings();
+    const currentFacingMode = settings.facingMode || 'user'; // Default to 'user' if facingMode is not available
+
+    // Check if the device is a mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Toggle the orientation
+    if (isMobile) {
       if (window.screen.orientation.type.startsWith('portrait')) {
         await window.screen.orientation.lock('landscape');
       } else {
         await window.screen.orientation.lock('portrait');
       }
-  
-      // Define the constraints for portrait and landscape modes
+    } else {
+      // For desktop devices, toggle the aspect ratio
       const isPortrait = window.screen.orientation.type.startsWith('portrait');
-      const constraints = {
-        video: {
-          facingMode: currentFacingMode,
-          aspectRatio: isPortrait ? 9 / 16 : 16 / 9,
-          width: { ideal: isPortrait ? 720 : 1280 },
-          height: { ideal: isPortrait ? 1280 : 720 }
-        },
-        audio: true
+      const newSettings = {
+        aspectRatio: isPortrait ? 16 / 9 : 9 / 16,
       };
-  
-      // Stop all tracks of the current stream
-      currentStream.getTracks().forEach(track => track.stop());
-  
-      // Get a new stream with the updated constraints
-      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-  
-      // Replace the stream in the media recorder and the video element
-      mediaRecorder.stream = newStream;
-      videoRef.current.srcObject = newStream;
-  
-      console.log(`Camera mode set to ${isPortrait ? 'vertical (portrait)' : 'horizontal (landscape)'}`);
-    } catch (err) {
-      console.log('Error toggling camera mode:', err);
+
+      // Update the video track's settings
+      await videoTrack.applyConstraints({ advanced: [newSettings] });
     }
-  };
+
+    console.log(`Camera mode set to ${isMobile ? (window.screen.orientation.type.startsWith('portrait') ? 'vertical (portrait)' : 'horizontal (landscape)') : (window.screen.orientation.type.startsWith('portrait') ? 'horizontal (landscape)' : 'vertical (portrait)')}`);
+  } catch (err) {
+    console.log('Error toggling camera mode:', err);
+  }
+};
   
   
   
