@@ -27,8 +27,11 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const [audioMuted, setAudioMuted] = useState(false);
     const [recordingNow, setRecordingNow] = useState(false);
     const [isVertical, setisVertical] = useState(true);
+    const streamRef = useRef(null);
     const [on, toggle] = useTorchLight(streamRef.current);
-
+    const setRef = ({ stream }) => {
+        streamRef.current = stream;
+      };
     useEffect(() => {
         if (recordingNow && sessionOption === "screenCapture") {
             startRecording();
@@ -102,7 +105,13 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
     const startCameraRecording = async () => {
         let cameraStream;
         try {
-            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                video: {
+                    width: { ideal: 1020, max: 1020 },
+                    height: { ideal: 720, max: 720 }
+                }, 
+                audio: true
+            });
     
             const recorder = new MediaRecorder(cameraStream);
             setMediaRecorder(recorder);
@@ -469,39 +478,32 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
 
  // Initially set to portrait mode
 
-    const toggleCameraMode = async () => {
-        try {
-            const videoTrack = mediaRecorder.stream.getVideoTracks()[0];
-
-            // Toggle between vertical and horizontal
-            setisVertical(!isVertical);
-
-            // Change the screen orientation
-            if (isVertical) {
-                debugger
-                await window.screen.orientation.lock('portrait-primary');
-                console.log('Camera mode set to vertical (portrait)');
-            } else {
-                debugger
-                await window.screen.orientation.lock('landscape-primary');
-                console.log('Camera mode set to horizontal (landscape)');
-            }
-
-            // Define the constraints for portrait and landscape modes
-            const constraints = isVertical
-                ? { aspectRatio: 9 / 16 } // Portrait: 9:16 aspect ratio
-                : { aspectRatio: 16 / 9 }; // Landscape: 16:9 aspect ratio
-
-            await videoTrack.applyConstraints(constraints);
-
-        } catch (err) {
-            console.log(err);
-        }
-    };
+ const toggleCameraMode = async () => {
+    try {
+      const stream = videoRef.current.srcObject; // Get the MediaStream object
+      const videoTrack = stream.getVideoTracks()[0]; // Get the video track
+  
+      setisVertical(!isVertical);
+  
+      // Define the constraints for portrait and landscape modes
+      const constraints = isVertical
+        ? { facingMode: 'environment', ideal: { aspectRatio: 9 / 16 } } // Portrait: 9:16 aspect ratio, facingMode: environment for rear camera
+        : { facingMode: 'environment', ideal: { aspectRatio: 16 / 9 } }; // Landscape: 16:9 aspect ratio, facingMode: environment for rear camera
+  
+      // Stop the video track, apply the new constraints, and start it again
+      await videoTrack.stop();
+      await videoTrack.applyConstraints(constraints);
+      await videoTrack.start();
+  
+      console.log(`Camera mode set to ${isVertical ? 'vertical (portrait)' : 'horizontal (landscape)'}`);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
 
     const onExit = () => {
-        // Implement the logic to toggle flash
+        setRecordingNow(false);
     };
 
     return (
@@ -568,7 +570,7 @@ const SessionDialog = ({ openSessionDialog, setVisible }) => {
                             <Button icon="pi pi-refresh" className="control-button" onClick={toggleCamera} />
                             <Button icon={`pi pi-${isVertical ? 'arrows-v' : 'arrows-h'}`} className="control-button" onClick={toggleCameraMode} />
                             
-                            <Button icon="pi pi-bolt" className="control-button" onClick={toggle} />
+                            {/* <Button icon="pi pi-bolt" className="control-button" onClick={toggle} /> */}
                             <Button icon="pi pi-times" className="control-button" onClick={onExit} />
                             <Button icon={`pi pi-${audioMuted ? 'volume-off' : 'volume-up'}`} className="control-button" onClick={toggleAudioMute} />
                         </div>
